@@ -13,7 +13,7 @@ def load_data(file_path):
     df['Hour'] = df['Timestamp'].dt.hour
     return df
 
-data_file = 'cleaned_it_service_performance.csv'  # Store file path in variable
+data_file = 'Scripts/cleaned_it_service_performance.csv'  # Store file path in variable
 df = load_data(data_file)
 
 # --- 2. Dashboard Title and Intro ---

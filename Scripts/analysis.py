@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Load the cleaned data
-df = pd.read_csv('cleaned_it_service_performance.csv')
+df = pd.read_csv('/Scripts/cleaned_it_service_performance.csv')
 
 # Display first few rows
 print(df.head())
