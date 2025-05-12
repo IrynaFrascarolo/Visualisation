@@ -89,7 +89,7 @@ st.pyplot(fig5)
 
 # Insights Summary
 st.header("Insights Summary")
-with open('analysis_summary.txt', 'r') as file:
+with open('Scripts/analysis_summary.txt', 'r') as file:
     summary = file.read()
 st.text(summary)
 
