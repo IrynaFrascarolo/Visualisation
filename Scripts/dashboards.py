@@ -13,7 +13,7 @@ def load_data(file_path):
     df['Hour'] = df['Timestamp'].dt.hour
     return df
 
-data_file = '/Users/irynasmahina/Qimproject/cleaned_it_service_performance.csv'  # Store file path in variable
+data_file = 'cleaned_it_service_performance.csv'  # Store file path in variable
 df = load_data(data_file)
 
 # --- 2. Dashboard Title and Intro ---
@@ -89,7 +89,7 @@ st.pyplot(fig5)
 
 # Insights Summary
 st.header("Insights Summary")
-with open('/Users/irynasmahina/Qimproject/analysis_summary.txt', 'r') as file:
+with open('analysis_summary.txt', 'r') as file:
     summary = file.read()
 st.text(summary)
 
