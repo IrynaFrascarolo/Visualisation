@@ -108,16 +108,18 @@ if df_cleaned is not None:
         df_filtered = df_filtered[df_filtered['Service Name'].isin(selected_services)]
 
         if not df_filtered.empty:
-            # Hourly Response Time Trend per Service
+            # --- Hourly Response Time Trend ---
             st.header("Hourly Response Time Trend per Service")
-            fig, ax = plt.subplots(figsize=(10, 6))
+            fig4, ax4 = plt.subplots(figsize=(10, 6))
             hourly_response = df_filtered.groupby(['Hour', 'Service Name'])['Response Time (ms)'].mean().unstack()
-            hourly_response.plot(kind='line', marker='o', ax=ax)
+            hourly_response.plot(kind='line', marker='o', ax=ax4)
             plt.title('Hourly Average Response Time by Service')
             plt.xlabel('Hour of the Day')
             plt.ylabel('Average Response Time (ms)')
             plt.xticks(range(0, 24))
-            st.pyplot(fig)
+            plt.grid(True)
+            plt.legend(title='Service Name')
+            st.pyplot(fig4)
 
             # Most Frequent Error Codes
             st.header("Most Frequent Error Codes")
