@@ -44,9 +44,13 @@ def run_generation_cleaning():
 @st.cache_data
 def load_and_report_data(file_pattern):
     list_of_files = glob.glob(file_pattern)
+    
     if not list_of_files:
-        st.error("No cleaned data files found.")
-        return None, None, None
+        st.error("No cleaned data files found. Please ensure the correct file pattern is used.")
+        return None, None
+    
+    # Debugging: Show the matched files
+    st.write(f"Files found matching pattern: {list_of_files}")
 
     latest_cleaned_file = max(list_of_files, key=os.path.getmtime)
     df_cleaned = pd.read_csv(latest_cleaned_file)
