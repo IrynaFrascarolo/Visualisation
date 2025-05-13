@@ -10,7 +10,7 @@ import subprocess
 import sys
 import time  # Import the time module
 
-base_folder = os.path.expanduser('~/Qimproject/')
+base_folder = '/home/appuser/'
 
 def run_generation_cleaning():
     with st.spinner("Generating data..."):
