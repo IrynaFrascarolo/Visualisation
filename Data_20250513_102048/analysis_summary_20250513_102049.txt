@@ -1,0 +1,20 @@
+IT Service Performance Analysis Summary
+Analysis Timestamp: 2025-05-13 10:20:49
+
+Average Response Times per Service:
+Service Name
+Auth Service       500.538197
+Data Sync          500.972766
+Payment Gateway    488.440336
+User Profile       488.572942
+
+Error Code Frequencies:
+Error Code
+No Error    3777
+404.0        256
+503.0        256
+500.0        242
+401.0        226
+
+Correlation between Response Time and User Satisfaction: 0.01
+Analysis completed successfully!

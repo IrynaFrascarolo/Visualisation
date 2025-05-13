@@ -1,0 +1,29 @@
+
+        Data Cleaning Report - 2025-05-13 09:54:47
+
+        Initial number of rows: 5000
+        Final number of rows: 4751
+
+        Missing values before cleaning:
+        Timestamp                0
+Service Name             0
+Response Time (ms)       0
+Error Code            4024
+User Satisfaction        0
+dtype: int64
+
+        Missing values after cleaning:
+        Timestamp             0
+Service Name          0
+Response Time (ms)    0
+Error Code            0
+User Satisfaction     0
+dtype: int64
+
+        Duplicate rows before cleaning: 0
+        Duplicate rows after cleaning: 0
+
+        Number of outliers removed (Response Time > 95th percentile): 249
+
+        Cleaned data file: cleaned_it_service_performance_20250513_095447.csv
+        
