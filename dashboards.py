@@ -52,7 +52,14 @@ def load_and_report_data(file_pattern):
     df_cleaned = pd.read_csv(latest_cleaned_file)
     df_cleaned['Timestamp'] = pd.to_datetime(df_cleaned['Timestamp'])
     df_cleaned['Hour'] = df_cleaned['Timestamp'].dt.hour
-    return df_cleaned, None, None
+
+    # Locate analysis summary file
+    cleaned_dir = os.path.dirname(latest_cleaned_file)
+    analysis_file_pattern = os.path.join(cleaned_dir, 'analysis_summary_*.txt')
+    summary_files = glob.glob(analysis_file_pattern)
+    latest_summary_file = max(summary_files, key=os.path.getmtime) if summary_files else None
+
+    return df_cleaned, latest_summary_file
 
 # Streamlit UI
 st.sidebar.button("Generate and Clean New Data", on_click=run_generation_cleaning)
@@ -62,17 +69,19 @@ if 'cleaned_file_pattern' not in st.session_state:
         base_folder, 'Data_*', 'cleaned_it_service_performance_*.csv')
 
 if 'data_loaded' not in st.session_state or not st.session_state['data_loaded']:
-    df_cleaned, _, _ = load_and_report_data(st.session_state['cleaned_file_pattern'])
+    df_cleaned, latest_summary_file = load_and_report_data(st.session_state['cleaned_file_pattern'])
     st.session_state['data_loaded'] = True
     st.session_state['loaded_data'] = df_cleaned
+    st.session_state['latest_summary_file'] = latest_summary_file
 else:
     df_cleaned = st.session_state.get('loaded_data')
+    latest_summary_file = st.session_state.get('latest_summary_file')
 
 if df_cleaned is not None:
     st.title("IT Service Performance Dashboard")
     st.markdown("Visualizing performance, error analysis, and satisfaction of IT services.")
 
-    # Initialize date range in session state if not already present
+    # Initialize date range
     min_date = df_cleaned['Timestamp'].min().date()
     max_date = df_cleaned['Timestamp'].max().date()
 
@@ -136,9 +145,22 @@ if df_cleaned is not None:
             plt.title('User Satisfaction Level Distribution (Percentage)')
             st.pyplot(fig4)
 
+        # Insights Summary
+        st.header("Insights Summary")
+        if latest_summary_file:
+            try:
+                with open(latest_summary_file, 'r') as file:
+                    summary = file.read()
+                st.text_area("Analysis Summary", summary, height=200)
+            except FileNotFoundError:
+                st.warning("Analysis summary file not found.")
+            except Exception as e:
+                st.error(f"Error reading summary file: {e}")
+        else:
+            st.warning("No analysis summary file found.")
+
         st.success("Dashboard loaded successfully!")
 else:
-    # Check for valid date range selection
     if 'selected_dates' not in st.session_state or len(st.session_state['selected_dates']) != 2:
         st.warning("Please select a valid date range.")
     else:
