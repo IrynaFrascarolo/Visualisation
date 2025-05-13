@@ -3,7 +3,7 @@ from datetime import datetime
 import os
 import glob
 
-base_folder = os.path.expanduser('~/Qimproject/')
+base_folder = base_folder = '/home/appuser/'
 def clean_data(df):
     # Ensure the 'Error Code' column is treated as string to accommodate 'No Error'
     df['Error Code'] = df['Error Code'].astype(str).fillna('No Error')
