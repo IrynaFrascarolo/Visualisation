@@ -9,11 +9,8 @@ from datetime import datetime, date
 import subprocess
 import sys
 import time
-import plotly.graph_objects as go
 
-# Ensure this is the correct path
-base_folder = os.path.expanduser('~/Qimproject/')
-
+base_folder = '/home/appuser/'
 
 def run_generation_cleaning():
     with st.spinner("Generating data..."):
@@ -22,6 +19,7 @@ def run_generation_cleaning():
         except subprocess.CalledProcessError as e:
             st.error(f"Error during data generation: {e}")
             return
+
     with st.spinner("Cleaning data..."):
         try:
             subprocess.run([sys.executable, 'clean_data.py'], check=True)
@@ -76,7 +74,7 @@ def run_generation_cleaning():
 
     st.success("Data generation, cleaning, and analysis complete!")
     st.session_state['data_loaded'] = False
-    time.sleep(1)  # Add a 1-second delay
+    time.sleep(1)
     st.rerun()
 
 
@@ -84,21 +82,19 @@ def run_generation_cleaning():
 def load_and_report_data(file_pattern):
     list_of_files = glob.glob(file_pattern)
     if not list_of_files:
-        st.error("No cleaned data files found in the specified location.")
+        st.error("No cleaned data files found.")
         return None, None, None
+
     latest_cleaned_file = max(list_of_files, key=os.path.getmtime)
     df_cleaned = pd.read_csv(latest_cleaned_file)
     df_cleaned['Timestamp'] = pd.to_datetime(df_cleaned['Timestamp'])
     df_cleaned['Hour'] = df_cleaned['Timestamp'].dt.hour
 
+    # Locate analysis summary file
     cleaned_dir = os.path.dirname(latest_cleaned_file)
-    original_file_path = os.path.join(
-        cleaned_dir, 'generated_it_service_performance.csv')
+    original_file_path = os.path.join(cleaned_dir, 'generated_it_service_performance.csv')
 
-    df_original = None
-    cleaning_info = None
-    if os.path.exists(original_file_path):
-        df_original = pd.read_csv(original_file_path)
+    return df_cleaned, latest_summary_file
 
         initial_rows = len(df_original)
         final_rows = len(df_cleaned)
@@ -142,16 +138,13 @@ if 'data_loaded' not in st.session_state or not st.session_state['data_loaded']:
     df_cleaned, cleaning_info, latest_summary_file = load_and_report_data(
         cleaned_file_pattern)
     st.session_state['data_loaded'] = True
-    st.session_state['cleaning_info'] = cleaning_info
+    st.session_state['loaded_data'] = df_cleaned
     st.session_state['latest_summary_file'] = latest_summary_file
 else:
-    df_cleaned = st.session_state.get('loaded_data', None)
-    cleaning_info = st.session_state.get('cleaning_info', None)
-    latest_summary_file = st.session_state.get('latest_summary_file', None)
+    df_cleaned = st.session_state.get('loaded_data')
+    latest_summary_file = st.session_state.get('latest_summary_file')
 
 if df_cleaned is not None:
-    st.session_state['loaded_data'] = df_cleaned
-
     st.title("IT Service Performance Dashboard")
     st.markdown(
         "Visualizing performance, error analysis, and satisfaction of IT services.")
@@ -171,26 +164,26 @@ if df_cleaned is not None:
     st.sidebar.header("Filters")
     min_date = df_cleaned['Timestamp'].min().date()
     max_date = df_cleaned['Timestamp'].max().date()
+    selected_dates = st.sidebar.date_input("Select Date Range", value=(min_date, max_date))
 
-    # Ensure selected_dates is initialized only after df_cleaned is loaded
-    if 'selected_dates' not in st.session_state:
-        selected_dates = (min_date, max_date)
-    else:
-        selected_dates = st.sidebar.date_input("Select Date Range", value=st.session_state['selected_dates'])
-
+    # Date range filter
+    selected_dates = st.sidebar.date_input("Select Date Range", value=st.session_state['selected_dates'])
     if len(selected_dates) == 2:
+        st.session_state['selected_dates'] = selected_dates
         start_date, end_date = selected_dates
         if start_date > end_date:
             st.warning("Start date must be earlier than or equal to the end date.")
             st.stop()
 
-        df_filtered_date = df_cleaned[
+        # Filter data based on date range
+        df_filtered = df_cleaned[
             (df_cleaned['Timestamp'].dt.date >= start_date) &
             (df_cleaned['Timestamp'].dt.date <= end_date)
-        ].copy()
+        ]
 
-        selected_services = st.sidebar.multiselect("Select Services", df_filtered_date['Service Name'].unique(), default=list(df_filtered_date['Service Name'].unique()))
-        df_filtered = df_filtered_date[df_filtered_date['Service Name'].isin(selected_services)].copy()
+        selected_services = st.sidebar.multiselect("Select Services", df_filtered['Service Name'].unique(), 
+                                                  default=list(df_filtered['Service Name'].unique()))
+        df_filtered = df_filtered[df_filtered['Service Name'].isin(selected_services)]
 
         if not df_filtered.empty:
             # --- Hourly Response Time Trend ---
@@ -206,62 +199,41 @@ if df_cleaned is not None:
             plt.legend(title='Service Name')
             st.pyplot(fig4)
 
-            # Average Response Time per Service (Trend)
-            st.header("📈 Average Response Time per Service")
-            fig2 = go.Figure()
-
-            # Group data by service and timestamp for the trendline
+            # --- Average Response Time Trend ---
+            st.header("Average Response Time per Service (Trend)")
+            fig1, ax1 = plt.subplots(figsize=(10, 6))
             for service in df_filtered['Service Name'].unique():
-                service_data = df_filtered[df_filtered['Service Name'] == service].groupby('Timestamp')['Response Time (ms)'].mean().reset_index()
-                fig2.add_trace(go.Scatter(x=service_data['Timestamp'], y=service_data['Response Time (ms)'],
-                                         mode='lines+markers', name=service))
-
-            # Update layout with titles and axis labels
-            fig2.update_layout(
-                title='Average Response Time per Service',
-                xaxis_title='Timestamp',
-                yaxis_title='Response Time (ms)',
-                xaxis=dict(tickformat='%Y-%m-%d %H:%M', showgrid=True),
-                yaxis=dict(showgrid=True)
-            )
-
-            # Display Plotly chart
-            st.plotly_chart(fig2)
+                service_data = df_filtered[df_filtered['Service Name'] == service].groupby('Timestamp')['Response Time (ms)'].agg(['mean', 'median']).reset_index()
+                sns.lineplot(data=service_data, x='Timestamp', y='mean', label=f'{service} (Mean)', ax=ax1)
+                sns.lineplot(data=service_data, x='Timestamp', y='median', label=f'{service} (Median)', linestyle='--', alpha=0.7, ax=ax1)
+            plt.axhline(y=500, color='red', linestyle='--', label='Critical Threshold')
+            plt.axhline(y=200, color='green', linestyle='--', label='Acceptable Threshold')
+            plt.title('Trend of Average/Median Response Time per Service')
+            plt.xlabel('Timestamp')
+            plt.ylabel('Response Time (ms)')
+            plt.legend()
+            plt.grid(True)
+            st.pyplot(fig1)
 
             # --- Most Frequent Error Codes ---
             st.header("Most Frequent Error Codes")
             error_counts = df_filtered['Error Code'].value_counts()
-            if len(error_counts) > 10:
-                top_errors = error_counts[:9]
-                other_count = error_counts[9:].sum()
-                error_counts_grouped = pd.concat([top_errors, pd.Series({'Other': other_count})])
-            else:
-                error_counts_grouped = error_counts
-
             fig2, ax2 = plt.subplots(figsize=(8, 6))
-            error_counts_grouped.plot(kind='bar', color='skyblue', ax=ax2)
+            error_counts.plot(kind='bar', ax=ax2, color='skyblue')
             plt.title('Error Code Frequency')
             plt.xlabel('Error Code')
             plt.ylabel('Count')
-            plt.xticks(rotation=45, ha='right')
-            plt.tight_layout()
+            plt.xticks(rotation=45)
             st.pyplot(fig2)
 
-            # --- Response Time vs User Satisfaction ---
+            # Response Time vs User Satisfaction
             st.header("Response Time vs User Satisfaction")
             fig3, ax3 = plt.subplots(figsize=(10, 6))
-            for service in df_filtered['Service Name'].unique():
-                service_data = df_filtered[df_filtered['Service Name'] == service]
-                sns.scatterplot(data=service_data, x='Response Time (ms)', y='User Satisfaction', label=service, alpha=0.6, ax=ax3)
-                sns.regplot(data=service_data, x='Response Time (ms)', y='User Satisfaction', scatter=False, label=f'{service} Trend', ax=ax3)
-            plt.title('Response Time vs User Satisfaction per Service')
-            plt.xlabel('Response Time (ms)')
-            plt.ylabel('User Satisfaction')
-            plt.legend()
-            plt.grid(True)
+            sns.scatterplot(data=df_filtered, x='Response Time (ms)', y='User Satisfaction', hue='Service Name', ax=ax3)
+            plt.title('Response Time vs User Satisfaction')
             st.pyplot(fig3)
 
-            # --- User Satisfaction Distribution ---
+            # User Satisfaction Distribution
             st.header("User Satisfaction Distribution")
             satisfaction_counts = df_filtered['User Satisfaction'].value_counts(normalize=True).sort_index() * 100
             fig5, ax5 = plt.subplots(figsize=(8, 5))
@@ -295,5 +267,5 @@ else:
     # These are the cases where df_cleaned is None or there are other issues.
     if 'selected_dates' in st.session_state and len(st.session_state['selected_dates']) != 2:
         st.warning("Please select a valid date range.")
-    else:
-        st.warning("No cleaned data loaded. Please click 'Generate and Clean New Data'.")
+else:
+    st.warning("No cleaned data loaded. Please click 'Generate and Clean New Data'.")
