@@ -220,13 +220,15 @@ if df_cleaned is not None:
             st.header("User Satisfaction Distribution")
             satisfaction_counts = df_filtered['User Satisfaction'].value_counts(normalize=True).sort_index() * 100
             fig5, ax5 = plt.subplots(figsize=(8, 5))
-            satisfaction_counts.plot(kind='bar', color='orange', ax=ax5)
+            bars = satisfaction_counts.plot(kind='bar', color='orange', ax=ax5)
             plt.title('User Satisfaction Level Distribution (Percentage)')
             plt.xlabel('Satisfaction Level')
             plt.ylabel('Percentage (%)')
             plt.xticks(rotation=0)
-            for i, v in satisfaction_counts.items():
-                ax5.text(i, v + 0.5, f'{v:.1f}%', ha='center', va='bottom', fontsize=10) # Reduced font size
+            for bar, percentage in zip(bars.patches, satisfaction_counts):
+                height = bar.get_height()
+                ax5.text(bar.get_x() + bar.get_width() / 2., height + 0.5,
+                         f'{percentage:.1f}%', ha='center', va='bottom', fontsize=10)
             st.pyplot(fig5)
 
             st.header("Insights Summary")
