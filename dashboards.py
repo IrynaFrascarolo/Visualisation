@@ -8,8 +8,8 @@ import os
 from datetime import datetime, date
 import subprocess
 import sys
-import time 
-import streamlit as st 
+import time
+
 base_folder = '/home/appuser/'
 
 def run_generation_cleaning():
@@ -226,7 +226,7 @@ if df_cleaned is not None:
             plt.ylabel('Percentage (%)')
             plt.xticks(rotation=0)
             for i, v in satisfaction_counts.items():
-                ax5.text(i, v + 0.5, f'{v:.1f}%', ha='center', va='bottom')
+                ax5.text(i, v + 0.5, f'{v:.1f}%', ha='center', va='bottom', fontsize=10) # Reduced font size
             st.pyplot(fig5)
 
             st.header("Insights Summary")
