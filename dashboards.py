@@ -171,14 +171,17 @@ if df_cleaned is not None:
     st.sidebar.header("Filters")
     min_date = df_cleaned['Timestamp'].min().date()
     max_date = df_cleaned['Timestamp'].max().date()
-    selected_dates = st.sidebar.date_input(
-        "Select Date Range", value=(min_date, max_date))
+
+    # Ensure selected_dates is initialized only after df_cleaned is loaded
+    if 'selected_dates' not in st.session_state:
+        selected_dates = (min_date, max_date)
+    else:
+        selected_dates = st.sidebar.date_input("Select Date Range", value=st.session_state['selected_dates'])
 
     if len(selected_dates) == 2:
         start_date, end_date = selected_dates
         if start_date > end_date:
-            st.warning(
-                "Start date must be earlier than or equal to the end date.")
+            st.warning("Start date must be earlier than or equal to the end date.")
             st.stop()
 
         df_filtered_date = df_cleaned[
@@ -186,17 +189,14 @@ if df_cleaned is not None:
             (df_cleaned['Timestamp'].dt.date <= end_date)
         ].copy()
 
-        selected_services = st.sidebar.multiselect("Select Services", df_filtered_date['Service Name'].unique(
-        ), default=list(df_filtered_date['Service Name'].unique()))
-        df_filtered = df_filtered_date[df_filtered_date['Service Name'].isin(
-            selected_services)].copy()
+        selected_services = st.sidebar.multiselect("Select Services", df_filtered_date['Service Name'].unique(), default=list(df_filtered_date['Service Name'].unique()))
+        df_filtered = df_filtered_date[df_filtered_date['Service Name'].isin(selected_services)].copy()
 
         if not df_filtered.empty:
             # --- Hourly Response Time Trend ---
             st.header("Hourly Response Time Trend per Service")
             fig4, ax4 = plt.subplots(figsize=(10, 6))
-            hourly_response = df_filtered.groupby(['Hour', 'Service Name'])[
-                                                  'Response Time (ms)'].mean().unstack()
+            hourly_response = df_filtered.groupby(['Hour', 'Service Name'])['Response Time (ms)'].mean().unstack()
             hourly_response.plot(kind='line', marker='o', ax=ax4)
             plt.title('Hourly Average Response Time by Service')
             plt.xlabel('Hour of the Day')
@@ -212,8 +212,7 @@ if df_cleaned is not None:
 
             # Group data by service and timestamp for the trendline
             for service in df_filtered['Service Name'].unique():
-                service_data = df_filtered[df_filtered['Service Name'] == service].groupby(
-                    'Timestamp')['Response Time (ms)'].mean().reset_index()
+                service_data = df_filtered[df_filtered['Service Name'] == service].groupby('Timestamp')['Response Time (ms)'].mean().reset_index()
                 fig2.add_trace(go.Scatter(x=service_data['Timestamp'], y=service_data['Response Time (ms)'],
                                          mode='lines+markers', name=service))
 
@@ -235,8 +234,7 @@ if df_cleaned is not None:
             if len(error_counts) > 10:
                 top_errors = error_counts[:9]
                 other_count = error_counts[9:].sum()
-                error_counts_grouped = pd.concat(
-                    [top_errors, pd.Series({'Other': other_count})])
+                error_counts_grouped = pd.concat([top_errors, pd.Series({'Other': other_count})])
             else:
                 error_counts_grouped = error_counts
 
@@ -254,10 +252,8 @@ if df_cleaned is not None:
             fig3, ax3 = plt.subplots(figsize=(10, 6))
             for service in df_filtered['Service Name'].unique():
                 service_data = df_filtered[df_filtered['Service Name'] == service]
-                sns.scatterplot(data=service_data, x='Response Time (ms)',
-                                y='User Satisfaction', label=service, alpha=0.6, ax=ax3)
-                sns.regplot(data=service_data, x='Response Time (ms)',
-                            y='User Satisfaction', scatter=False, label=f'{service} Trend', ax=ax3)
+                sns.scatterplot(data=service_data, x='Response Time (ms)', y='User Satisfaction', label=service, alpha=0.6, ax=ax3)
+                sns.regplot(data=service_data, x='Response Time (ms)', y='User Satisfaction', scatter=False, label=f'{service} Trend', ax=ax3)
             plt.title('Response Time vs User Satisfaction per Service')
             plt.xlabel('Response Time (ms)')
             plt.ylabel('User Satisfaction')
@@ -267,8 +263,7 @@ if df_cleaned is not None:
 
             # --- User Satisfaction Distribution ---
             st.header("User Satisfaction Distribution")
-            satisfaction_counts = df_filtered['User Satisfaction'].value_counts(
-                normalize=True).sort_index() * 100
+            satisfaction_counts = df_filtered['User Satisfaction'].value_counts(normalize=True).sort_index() * 100
             fig5, ax5 = plt.subplots(figsize=(8, 5))
             bars = satisfaction_counts.plot(kind='bar', color='orange', ax=ax5)
             plt.title('User Satisfaction Level Distribution (Percentage)')
@@ -283,25 +278,22 @@ if df_cleaned is not None:
 
         st.header("Insights Summary")
         if latest_summary_file:
-            print(
-                f"DASHBOARD: Trying to open summary file: {latest_summary_file}")
+            print(f"DASHBOARD: Trying to open summary file: {latest_summary_file}")
             try:
                 with open(latest_summary_file, 'r') as file:
                     summary = file.read()
                 st.text_area("Analysis Summary", summary, height=200)
             except FileNotFoundError:
-                st.warning(
-                    "Analysis summary file not found (error during open).")
+                st.warning("Analysis summary file not found (error during open).")
             except Exception as e:
                 st.error(f"Error reading summary file: {e}")
         else:
             st.warning("No analysis summary file found.")
 
-        st.success(
-            "Dashboard loaded with updated visualizations and date range!")
+        st.success("Dashboard loaded with updated visualizations and date range!")
 else:
     # These are the cases where df_cleaned is None or there are other issues.
-    if len(selected_dates) != 2:
+    if 'selected_dates' in st.session_state and len(st.session_state['selected_dates']) != 2:
         st.warning("Please select a valid date range.")
     else:
         st.warning("No cleaned data loaded. Please click 'Generate and Clean New Data'.")
