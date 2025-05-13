@@ -61,9 +61,11 @@ def load_and_report_data(file_pattern):
     cleaned_dir = os.path.dirname(latest_cleaned_file)
     analysis_file_pattern = os.path.join(cleaned_dir, 'analysis_summary_*.txt')
     summary_files = glob.glob(analysis_file_pattern)
+    
+    # Ensure we return exactly two values
     latest_summary_file = max(summary_files, key=os.path.getmtime) if summary_files else None
-
-    return df_cleaned, latest_summary_file
+    
+    return df_cleaned, latest_summary_file  # Ensure only two values are returned
 
 # Streamlit UI
 st.sidebar.button("Generate and Clean New Data", on_click=run_generation_cleaning)
@@ -171,3 +173,4 @@ else:
         st.warning("Please select a valid date range.")
     else:
         st.warning("No cleaned data loaded. Please click 'Generate and Clean New Data'.")
+
