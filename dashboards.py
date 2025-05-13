@@ -292,8 +292,8 @@ if df_cleaned is not None:
 
         st.success("Dashboard loaded with updated visualizations and date range!")
 else:
-    # These are the cases where df_cleaned is None or there are other issues.
-    if 'selected_dates' in st.session_state and len(st.session_state['selected_dates']) != 2:
+    # Check if the selected dates are in the session state
+    if 'selected_dates' not in st.session_state or len(st.session_state['selected_dates']) != 2:
         st.warning("Please select a valid date range.")
     else:
         st.warning("No cleaned data loaded. Please click 'Generate and Clean New Data'.")
