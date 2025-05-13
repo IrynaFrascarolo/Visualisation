@@ -4,6 +4,10 @@ import os
 import glob
 
 base_folder = os.path.expanduser('~/Qimproject/')
+def clean_data(df):
+    # Ensure the 'Error Code' column is treated as string to accommodate 'No Error'
+    df['Error Code'] = df['Error Code'].astype(str).fillna('No Error')
+    return df
 
 list_of_folders = [os.path.join(base_folder, d) for d in os.listdir(base_folder) if os.path.isdir(os.path.join(base_folder, d)) and d.startswith('Data_')]
 if not list_of_folders:
