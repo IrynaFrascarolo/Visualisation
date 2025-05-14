@@ -12,7 +12,7 @@ import time
 import plotly.graph_objects as go
 
 # Ensure this is the correct path
-base_folder = '/home/appuser/'
+base_folder = '/mount/src/'
 
 # Function to run data generation, cleaning, and analysis scripts
 def run_generation_cleaning():
