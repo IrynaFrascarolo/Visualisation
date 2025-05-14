@@ -5,7 +5,7 @@ from datetime import datetime
 import glob
 import os
 
-base_folder = '/home/appuser/mount/src/'
+base_folder = '/mount/src/visualisation'
 cleaned_file_pattern = os.path.join(base_folder, 'Data_*', 'cleaned_it_service_performance_*.csv')
 list_of_files = glob.glob(cleaned_file_pattern)
 
