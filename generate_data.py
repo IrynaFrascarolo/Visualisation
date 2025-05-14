@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 
-base_folder = '/mount/src/'
+base_folder = '/home/appuser/mount/src/'
 folder_name = datetime.now().strftime('Data_%Y%m%d_%H%M%S')
 full_path = os.path.join(base_folder, folder_name)
 os.makedirs(full_path, exist_ok=True)
