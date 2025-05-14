@@ -3,7 +3,7 @@ from datetime import datetime
 import os
 import glob
 
-base_folder = '/mount/src/'
+base_folder = '/home/appuser/mount/src/'
 
 def clean_data(df):
     # Ensure the 'Error Code' column is treated as string to accommodate 'No Error'
